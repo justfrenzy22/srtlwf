@@ -6,7 +6,6 @@ export interface ITodoHooks {
 		newTodo: ITodoItem,
 		setTodo: React.Dispatch<React.SetStateAction<ITodoItem>>
 	) => void;
-	// deleteTodo: (delTodoId: ITodoItem["id"]) => void;
 	EventDelegation: (
 		e: React.MouseEvent<HTMLDivElement>,
 	) => void;

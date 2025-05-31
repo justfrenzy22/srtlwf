@@ -7,14 +7,13 @@ const TodoItem = ({ todo }: { todo: ITodoItem }) => {
 			<button>
 				<GripVertical size={14} />
 			</button>
-			<span
-				data-complete-id={todo.id}
-				className={`
-					${todo.todoStatus === `completed` && `line-through`}
-					`}
-			>
-				{todo.content}
-			</span>
+			{todo.todoStatus === "active" ? (
+				<span data-complete-id={todo.id}>{todo.content}</span>
+			) : (
+				<span className="line-through" data-activate-id={todo.id}>
+					{todo.content}
+				</span>
+			)}
 			<button
 				className="rounded-full p-2.5 bg-primary cursor-pointer"
 				data-delete-id={todo.id}

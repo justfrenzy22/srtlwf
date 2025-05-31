@@ -1,0 +1,1 @@
+export type AttrType = "data-complete-id" | "data-activate-id" | "data-delete-id";

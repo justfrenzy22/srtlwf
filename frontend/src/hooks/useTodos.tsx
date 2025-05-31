@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { ITodoItem } from "../types/ITodoItem";
 import type { ITodoHooks } from "../types/ITodoHooks";
+import type { AttrType } from "../types/AttrType";
 
 export const useTodos = ({
 	setTodos,
@@ -114,6 +115,36 @@ export const useTodos = ({
 		}
 	};
 
+	const activateTodo = (todoId: ITodoItem[`id`]) => {
+		try {
+			setLoading(true);
+			// await
+			const todos = getTodos();
+
+			if (todos.length < 0) {
+				alert("There are no todos to complete");
+				return;
+			}
+
+			const todo = todos.find((todo) => todo.id === todoId);
+
+			if (!todo) {
+				alert("Todo not found");
+				return;
+			}
+
+			todo.todoStatus = "active";
+
+			updateTodos(todos);
+		} catch (err: unknown) {
+			if (err instanceof Error) {
+				alert(err.message);
+			}
+		} finally {
+			setLoading(false);
+		}
+	};
+
 	const deleteTodo = (delTodoId: ITodoItem[`id`]): void => {
 		try {
 			setLoading(true);
@@ -141,23 +172,36 @@ export const useTodos = ({
 	};
 
 	const EventDelegation = (e: React.MouseEvent<HTMLDivElement>) => {
-		const delBtn = (e.target as HTMLElement).closest(`[data-delete-id]`);
+		const target = e.target as HTMLDivElement;
 
-		if (delBtn) {
-			const id = delBtn.getAttribute(`data-delete-id`);
+		const actions: {
+			attr: AttrType;
+			handler: (id: ITodoItem[`id`]) => void;
+		}[] = [
+			{
+				attr: "data-complete-id",
+				handler: completeTodo,
+			},
+			{
+				attr: "data-activate-id",
+				handler: activateTodo,
+			},
+			{
+				attr: "data-delete-id",
+				handler: deleteTodo,
+			},
+		];
 
-			if (id) {
-				deleteTodo(id as ITodoItem[`id`]);
-			}
-		}
+		for (const { attr, handler } of actions) {
+			const button = target.closest(`[${attr}]`);
 
-		const completeBtn = (e.target as HTMLElement).closest(`[data-complete-id]`);
+			if (button) {
+				const id = button.getAttribute(attr) as ITodoItem[`id`] | null;
 
-		if (completeBtn) {
-			const id = completeBtn.getAttribute(`data-complete-id`);
-
-			if (id) {
-				completeTodo(id as ITodoItem[`id`]);
+				if (id) {
+					handler(id);
+					break;
+				}
 			}
 		}
 	};
