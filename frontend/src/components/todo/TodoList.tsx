@@ -12,7 +12,7 @@ const TodoList = ({
 	return (
 		<div
 			className="bg-foreground p-4 rounded-lg flex flex-col gap-3 min-w-[300px]"
-			onClick={EventDelegation}
+			onClick={(e) => EventDelegation(e, "item")}
 		>
 			{todos.length === 0 ? (
 				<p className="text-secondary">There are no todos</p>

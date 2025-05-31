@@ -8,6 +8,7 @@ export interface ITodoHooks {
 	) => void;
 	EventDelegation: (
 		e: React.MouseEvent<HTMLDivElement>,
+		section: "item" | "filter"
 	) => void;
     loadTodos: () => void
 }

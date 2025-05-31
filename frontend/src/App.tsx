@@ -1,9 +1,9 @@
-// import "./App.css";
 import { useEffect, useState } from "react";
 import TodoInput from "./components/todo/TodoInput";
 import TodoList from "./components/todo/TodoList";
 import type { ITodoItem } from "./types/ITodoItem";
 import { useTodos } from "./hooks/useTodos";
+import FilterButtons from "./components/todo/FilterButtons";
 
 const App = () => {
 	const [todos, setTodos] = useState<ITodoItem[]>([]);
@@ -19,6 +19,7 @@ const App = () => {
 	return (
 		<div>
 			<div className="flex min-h-svh flex-col items-center justify-center bg-primary w-screen">
+				<FilterButtons EventDelegation={EventDelegation} />
 				<div className="flex flex-row gap-2 justify-center items-center w-full">
 					<TodoInput isLoading={isLoading} onAddTodo={handleAddTodo} />
 					<TodoList EventDelegation={EventDelegation} todos={todos} />

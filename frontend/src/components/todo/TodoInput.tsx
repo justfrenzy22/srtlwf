@@ -13,7 +13,7 @@ const TodoInput = ({
 }) => {
 	const [todo, setTodo] = useState<ITodoItem>({
 		content: "",
-		todoStatus: "active",
+		completed: false,
 		id: crypto.randomUUID(),
 	});
 

@@ -2,206 +2,153 @@ import { useState } from "react";
 import type { ITodoItem } from "../types/ITodoItem";
 import type { ITodoHooks } from "../types/ITodoHooks";
 import type { AttrType } from "../types/AttrType";
+import type { IDelegationFunc } from "../types/IDelecationFunc";
 
 export const useTodos = ({
 	setTodos,
 }: {
 	setTodos: React.Dispatch<React.SetStateAction<ITodoItem[]>>;
 }): ITodoHooks => {
-	// for future use for connecting with backend
 	const [isLoading, setLoading] = useState<boolean>(false);
 
-	const handleAddTodo = (
-		newTodo: ITodoItem,
-		setTodo: React.Dispatch<React.SetStateAction<ITodoItem>>
-	): void => {
-		// Promise<void>/Response message
+	// Helpers
+	const parseTodosFromStorage = (): ITodoItem[] => {
 		try {
-			setLoading(true);
-
-			if (!validateTodo(newTodo)) {
-				// error handling or throwing error
-				alert("Please enter a todo");
-				return;
-			}
-			SaveToLocalStorage(newTodo);
-			// render the new todo
-			setTodos((prev) => [...prev, newTodo]);
-			// update the state with new details
-			setTodo({ content: "", todoStatus: "active", id: crypto.randomUUID() });
+			return JSON.parse(localStorage.getItem("todos") || "[]");
 		} catch (err: unknown) {
 			if (err instanceof Error) alert(err.message);
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	const validateTodo = (todo: ITodoItem): boolean => {
-		if (todo.content === "") {
-			return false;
-		}
-		return true;
-	};
-
-	const SaveToLocalStorage = (newTodo: ITodoItem): void => {
-		const todos = JSON.parse(
-			localStorage.getItem("todos") || "[]"
-		) as ITodoItem[];
-		todos.push(newTodo);
-		localStorage.setItem("todos", JSON.stringify(todos));
-	};
-
-	const getTodos = (): ITodoItem[] => {
-		try {
-			const todos = JSON.parse(
-				localStorage.getItem("todos") || "[]"
-			) as ITodoItem[];
-			return todos;
-		} catch (err: unknown) {
-			if (err instanceof Error) {
-				alert(err.message);
-			}
 			return [];
 		}
 	};
 
-	const loadTodos = () => {
+	const saveTodosToStorage = (todos: ITodoItem[]) => {
+		localStorage.setItem("todos", JSON.stringify(todos));
+	};
+
+	const withLoading = async (func: () => void) => {
 		try {
 			setLoading(true);
-			const todos = getTodos();
-			setTodos(todos);
+			await func();
 		} catch (err: unknown) {
-			if (err instanceof Error) {
-				alert(err.message);
-				setTodos([]);
-			}
+			if (err instanceof Error) alert(err.message);
 		} finally {
 			setLoading(false);
 		}
 	};
 
 	const updateTodos = (todos: ITodoItem[]) => {
-		localStorage.setItem("todos", JSON.stringify(todos));
+		saveTodosToStorage(todos);
 		setTodos(todos);
 	};
 
-	const completeTodo = (todoId: ITodoItem[`id`]) => {
-		try {
-			setLoading(true);
-			// await
-			const todos = getTodos();
-
-			if (todos.length < 0) {
-				alert("There are no todos to complete");
+	const handleAddTodo = (
+		newTodo: ITodoItem,
+		setTodo: React.Dispatch<React.SetStateAction<ITodoItem>>
+	): void => {
+		withLoading(() => {
+			if (!newTodo.content.trim()) {
+				alert("Please enter a todo");
 				return;
 			}
+			const todos = parseTodosFromStorage();
+			const updatedTodos = [...todos, newTodo];
+			saveTodosToStorage(updatedTodos);
+			setTodos(updatedTodos);
+			setTodo({ content: "", completed: false, id: crypto.randomUUID() });
+		});
+	};
 
-			const todo = todos.find((todo) => todo.id === todoId);
+	const loadTodos = () => {
+		withLoading(() => {
+			const todos = parseTodosFromStorage();
+			setTodos(todos);
+		});
+	};
 
-			if (!todo) {
-				alert("Todo not found");
-				return;
-			}
+	const completeTodo = (todoId: ITodoItem["id"]) => {
+		withLoading(() => {
+			const todos = parseTodosFromStorage();
+			const todo = todos.find((t) => t.id === todoId);
+			if (!todo) return alert("Todo not found");
 
-			todo.todoStatus = "completed";
-
+			todo.completed = true;
 			updateTodos(todos);
-		} catch (err: unknown) {
-			if (err instanceof Error) {
-				alert(err.message);
-			}
-		} finally {
-			setLoading(false);
-		}
+		});
 	};
 
-	const activateTodo = (todoId: ITodoItem[`id`]) => {
-		try {
-			setLoading(true);
-			// await
-			const todos = getTodos();
+	const activateTodo = (todoId: ITodoItem["id"]) => {
+		withLoading(() => {
+			const todos = parseTodosFromStorage();
+			const todo = todos.find((t) => t.id === todoId);
+			if (!todo) return alert("Todo not found");
 
-			if (todos.length < 0) {
-				alert("There are no todos to complete");
-				return;
-			}
-
-			const todo = todos.find((todo) => todo.id === todoId);
-
-			if (!todo) {
-				alert("Todo not found");
-				return;
-			}
-
-			todo.todoStatus = "active";
-
+			todo.completed = false;
 			updateTodos(todos);
-		} catch (err: unknown) {
-			if (err instanceof Error) {
-				alert(err.message);
-			}
-		} finally {
-			setLoading(false);
-		}
+		});
 	};
 
-	const deleteTodo = (delTodoId: ITodoItem[`id`]): void => {
-		try {
-			setLoading(true);
-			const todos = getTodos();
-
-			if (todos.length < 0) {
-				alert("There are no todos to delete");
-				return;
-			}
-
-			const todo = todos.find((todo) => todo.id === delTodoId);
-
-			if (!todo) {
-				alert("Todo not found");
-				return;
-			}
-
-			const filteredTodos = todos.filter((todo) => todo.id !== delTodoId);
-			updateTodos(filteredTodos);
-		} catch (err: unknown) {
-			if (err instanceof Error) alert(err.message);
-		} finally {
-			setLoading(false);
-		}
+	const deleteTodo = (todoId: ITodoItem["id"]) => {
+		withLoading(() => {
+			const todos = parseTodosFromStorage();
+			const updatedTodos = todos.filter((t) => t.id !== todoId);
+			updateTodos(updatedTodos);
+		});
 	};
 
-	const EventDelegation = (e: React.MouseEvent<HTMLDivElement>) => {
-		const target = e.target as HTMLDivElement;
+	const filterAll = () => {
+		withLoading(() => {
+			const todos = parseTodosFromStorage();
+			setTodos(todos);
+		});
+	};
 
-		const actions: {
-			attr: AttrType;
-			handler: (id: ITodoItem[`id`]) => void;
-		}[] = [
-			{
-				attr: "data-complete-id",
-				handler: completeTodo,
-			},
-			{
-				attr: "data-activate-id",
-				handler: activateTodo,
-			},
-			{
-				attr: "data-delete-id",
-				handler: deleteTodo,
-			},
-		];
+	const filterCompleted = () => {
+		withLoading(() => {
+			const todos = parseTodosFromStorage();
+			setTodos(todos.filter((t) => t.completed));
+		});
+	};
 
-		for (const { attr, handler } of actions) {
-			const button = target.closest(`[${attr}]`);
+	const filterActive = () => {
+		withLoading(() => {
+			const todos = parseTodosFromStorage();
+			setTodos(todos.filter((t) => !t.completed));
+		});
+	};
 
-			if (button) {
-				const id = button.getAttribute(attr) as ITodoItem[`id`] | null;
+	const itemHandlers: Partial<Record<AttrType, IDelegationFunc>> = {
+		"data-complete-id": completeTodo,
+		"data-activate-id": activateTodo,
+		"data-delete-id": deleteTodo,
+	};
 
-				if (id) {
-					handler(id);
-					break;
+	const filterHandlers: Partial<Record<AttrType, IDelegationFunc>> = {
+		"data-filter-all": filterAll,
+		"data-filter-active": filterActive,
+		"data-filter-completed": filterCompleted,
+	};
+
+	const EventDelegation = (
+		e: React.MouseEvent<HTMLDivElement>,
+		section: "item" | "filter"
+	) => {
+		const target = e.target as HTMLElement;
+		const handlers = section === "item" ? itemHandlers : filterHandlers;
+
+		for (const attr in handlers) {
+			const action = target.closest(`[${attr}]`);
+			if (action) {
+				const handler = handlers[attr as AttrType] as IDelegationFunc;
+				const id =
+					section === "item"
+						? (action.getAttribute(attr) as ITodoItem["id"])
+						: undefined;
+				if (handler.length === 1 && id !== undefined) {
+					(handler as (id: ITodoItem["id"]) => void)(id);
+				} else {
+					(handler as () => void)();
 				}
+				break;
 			}
 		}
 	};

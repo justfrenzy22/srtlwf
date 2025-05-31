@@ -1,1 +1,1 @@
-export type AttrType = "data-complete-id" | "data-activate-id" | "data-delete-id";
+export type AttrType = "data-complete-id" | "data-activate-id" | "data-delete-id" | "data-filter-all" | "data-filter-active" | "data-filter-completed";

@@ -7,7 +7,7 @@ const TodoItem = ({ todo }: { todo: ITodoItem }) => {
 			<button>
 				<GripVertical size={14} />
 			</button>
-			{todo.todoStatus === "active" ? (
+			{!todo.completed ? (
 				<span data-complete-id={todo.id}>{todo.content}</span>
 			) : (
 				<span className="line-through" data-activate-id={todo.id}>
